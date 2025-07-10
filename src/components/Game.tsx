@@ -126,7 +126,7 @@ export default function Game() {
             Visit my website: masonistre.dev
           </a>
         </div>
-        {(state.solved || state.guesses.length >= 5) && state.puzzle.answer && (
+        {(state.solved || state.guesses.length >= 5) && state.puzzle && state.puzzle.answer && (
           <div className="card centered" style={{ border: '2px solid #22c55e', marginTop: 24 }}>
             <div style={{ fontSize: '2em', fontWeight: 700, color: '#a3e635', marginBottom: 8 }}>
               {state.puzzle.answer.fullName}
