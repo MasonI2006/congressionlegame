@@ -1,0 +1,299 @@
+/* Modern CSS Reset + Worldle-inspired dark theme */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  background: #18181b;
+  color: #f4f4f5;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  margin: 0 0 0.5em 0;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 0.75em 1em;
+  border: 2px solid #27272a;
+  border-radius: 8px;
+  background: #232326;
+  color: #f4f4f5;
+  font-size: 1.1em;
+  margin-bottom: 0.5em;
+  outline: none;
+  transition: border 0.2s;
+}
+input[type="text"]:focus {
+  border-color: #22d3ee;
+}
+input[disabled] {
+  background: #232326;
+  color: #888;
+  border-color: #232326;
+}
+
+button, .guess-suggestion {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.suggestion-list {
+  position: absolute;
+  width: 100%;
+  background: #232326;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  margin-top: 2px;
+}
+.suggestion-list button {
+  width: 100%;
+  text-align: left;
+  padding: 0.75em 1em;
+  border-bottom: 1px solid #27272a;
+  color: #f4f4f5;
+  background: none;
+  transition: background 0.2s;
+}
+.suggestion-list button:last-child {
+  border-bottom: none;
+}
+.suggestion-list button:hover {
+  background: #27272a;
+}
+
+.pie-chart-label {
+  font-size: 1em;
+  font-weight: bold;
+  fill: #f4f4f5;
+  text-shadow: 1px 1px 4px #000;
+  pointer-events: none;
+}
+
+.pie-chart-amount {
+  font-size: 0.95em;
+  fill: #a3e635;
+  font-weight: 600;
+  text-shadow: 1px 1px 4px #000;
+  pointer-events: none;
+}
+
+.pie-chart-section {
+  stroke: #18181b;
+  stroke-width: 4;
+}
+
+.card {
+  background: #232326;
+  border-radius: 18px !important;
+  box-shadow: 0 4px 32px 0 rgba(0,0,0,0.10), 0 1.5px 6px 0 rgba(0,0,0,0.08);
+  padding: 2em;
+  margin-bottom: 2em;
+  animation: fadeInCard 0.7s cubic-bezier(.4,2,.6,1);
+  border: none !important;
+  background: #23232b !important;
+}
+
+.guess-history {
+  background: #232326;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  padding: 2em;
+  margin-bottom: 2em;
+}
+.guess-row {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  margin-bottom: 1em;
+}
+.guess-number {
+  width: 2em;
+  height: 2em;
+  background: #27272a;
+  color: #a3e635;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+.guess-name {
+  flex: 1;
+  font-weight: 500;
+  color: #f4f4f5;
+}
+.guess-feedback {
+  display: flex;
+  gap: 0.5em;
+}
+.feedback-bar {
+  width: 2em;
+  height: 2em;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+.feedback-correct {
+  background: #22c55e;
+  color: #fff;
+  box-shadow: 0 0 12px 2px #a3e63555;
+}
+.feedback-wrong {
+  background: #ef4444;
+  color: #fff;
+  box-shadow: 0 0 12px 2px #ef444455;
+}
+.feedback-partial {
+  background: #52525b;
+  color: #fff;
+}
+.guess-empty {
+  opacity: 0.3;
+}
+
+.legend {
+  display: flex;
+  gap: 1.5em;
+  justify-content: center;
+  margin-top: 1.5em;
+  color: #a1a1aa;
+  font-size: 0.95em;
+}
+.legend-dot {
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 0.5em;
+}
+.legend-correct { background: #22c55e; }
+.legend-wrong { background: #ef4444; }
+.legend-partial { background: #52525b; }
+
+.instructions {
+  color: #a1a1aa;
+  font-size: 0.95em;
+  text-align: center;
+  margin-top: 1em;
+}
+
+.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.title {
+  color: #f4f4f5;
+  font-size: 2em;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 0.5em;
+}
+.subtitle {
+  color: #a1a1aa;
+  font-size: 1.1em;
+  text-align: center;
+  margin-bottom: 2em;
+}
+
+/* Button hover effect */
+button, .guess-suggestion {
+  transition: transform 0.15s cubic-bezier(.4,2,.6,1), background 0.2s;
+}
+button:hover, .guess-suggestion:hover {
+  transform: scale(1.07);
+  background: #bef264 !important;
+  color: #18181b !important;
+}
+
+/* Animated underline for title */
+.animated-underline {
+  display: inline-block;
+  position: relative;
+}
+.animated-underline::after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 0; right: 0; bottom: -8px;
+  height: 4px;
+  background: linear-gradient(90deg, #a3e635 0%, #ef4444 100%);
+  border-radius: 2px;
+  transform: scaleX(0);
+  transition: transform 0.5s cubic-bezier(.4,2,.6,1);
+}
+.animated-underline:hover::after {
+  transform: scaleX(1);
+}
+
+/* Subtle background gradient */
+body, .bg-gray-50 {
+  background: linear-gradient(135deg, #18181b 0%, #23232b 100%) !important;
+}
+
+/* Card fade-in animation */
+@keyframes fadeInCard {
+  from { opacity: 0; transform: translateY(32px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+
+/* Modern input field */
+input[type='text'] {
+  background: #18181b;
+  color: #fff;
+  border: 2px solid #a3e635;
+  border-radius: 10px;
+  padding: 0.7em 1.2em;
+  font-size: 1.2em;
+  outline: none;
+  transition: border 0.2s;
+}
+input[type='text']:focus {
+  border: 2.5px solid #ef4444;
+}
+
+/* Subtle glow on correct feedback */
+.feedback-correct {
+  box-shadow: 0 0 12px 2px #a3e63555;
+}
+
+/* Responsive: stack card rows vertically on mobile */
+@media (max-width: 1400px) {
+  .centered > div[style*='flex-direction: row'] {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0 !important;
+  }
+  .card.centered {
+    margin: 16px 0 !important;
+    min-width: 0 !important;
+    max-width: 95vw !important;
+    width: 100% !important;
+  }
+  .guess-history.card.centered {
+    min-width: 0 !important;
+    max-width: 98vw !important;
+    font-size: 0.75em !important;
+    padding: 0.9em !important;
+  }
+  .animated-underline {
+    font-size: 2.5em !important;
+  }
+} 
