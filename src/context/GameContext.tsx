@@ -8,6 +8,9 @@ export type Guess = {
   sameParty: boolean;
   chamber: 'House' | 'Senate';
   sameChamber: boolean;
+  party?: string;
+  state?: string;
+  actualState?: string;
 };
 
 interface GameState {
