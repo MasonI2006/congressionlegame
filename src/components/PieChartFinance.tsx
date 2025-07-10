@@ -5,7 +5,7 @@ const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#6366F1'];
 
 export default function PieChartFinance({ data }: { data: { large: { pct: number; amount: number }; small: { pct: number; amount: number }; pac: { pct: number; amount: number }; other: { pct: number; amount: number }; self: { pct: number; amount: number } } }) {
   // Handle no data
-  if (!data || data === 'none' || Object.values(data).every((v: any) => v.pct === 0 && v.amount === 0)) {
+  if (!data || Object.values(data).every((v: any) => v.pct === 0 && v.amount === 0)) {
     return (
       <div className="card centered" style={{ margin: '0 64px', minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <h3 className="title" style={{ fontSize: '1.3em' }}>No data available for campaign finance mix</h3>
