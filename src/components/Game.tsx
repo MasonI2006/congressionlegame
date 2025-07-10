@@ -82,29 +82,33 @@ export default function Game() {
         />
       )}
       <div className="centered">
-        <div style={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'center', marginBottom: 24 }}>
-          <PieChartFinance data={state.puzzle.financeMix} />
-          <div style={{ marginLeft: -32 }}>
-            <PieChartTopContributors data={state.puzzle.topContributors} />
-          </div>
-          <div style={{ marginLeft: -32 }}>
-            <PieChartTopIndustries data={state.puzzle.topIndustries} />
-          </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: 24, justifyContent: 'center', marginBottom: 24 }}>
-          <StockCard value={state.puzzle.stockValueUSD} tradesCount={state.puzzle.tradesCount} />
-          <ElectionCard firstElection={state.puzzle.answer.firstElection} nextElection={state.puzzle.answer.nextElection} />
-          {Array.isArray(state.puzzle.committees) && state.puzzle.committees.length > 0 && (
-            <div className="card centered" style={{ minWidth: 240, maxWidth: 240 }}>
-              <h3 className="title" style={{ fontSize: '1.2em', marginBottom: 8 }}>Committees</h3>
-              <ul style={{ listStyle: 'disc', paddingLeft: 24, textAlign: 'left' }}>
-                {state.puzzle.committees.map((committee: string, idx: number) => (
-                  <li key={idx} style={{ marginBottom: 4 }}>{committee}</li>
-                ))}
-              </ul>
+        {state.puzzle && (
+          <>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'center', marginBottom: 24 }}>
+              <PieChartFinance data={state.puzzle.financeMix} />
+              <div style={{ marginLeft: -32 }}>
+                <PieChartTopContributors data={state.puzzle.topContributors} />
+              </div>
+              <div style={{ marginLeft: -32 }}>
+                <PieChartTopIndustries data={state.puzzle.topIndustries} />
+              </div>
             </div>
-          )}
-        </div>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: 24, justifyContent: 'center', marginBottom: 24 }}>
+              <StockCard value={state.puzzle.stockValueUSD} tradesCount={state.puzzle.tradesCount} />
+              <ElectionCard firstElection={state.puzzle.answer.firstElection} nextElection={state.puzzle.answer.nextElection} />
+              {Array.isArray(state.puzzle.committees) && state.puzzle.committees.length > 0 && (
+                <div className="card centered" style={{ minWidth: 240, maxWidth: 240 }}>
+                  <h3 className="title" style={{ fontSize: '1.2em', marginBottom: 8 }}>Committees</h3>
+                  <ul style={{ listStyle: 'disc', paddingLeft: 24, textAlign: 'left' }}>
+                    {state.puzzle.committees.map((committee: string, idx: number) => (
+                      <li key={idx} style={{ marginBottom: 4 }}>{committee}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </>
+        )}
         <div className="card centered" style={{ width: '100%', maxWidth: '100%' }}>
           <h2 className="title" style={{ fontSize: '1.2em', marginBottom: 8 }}>Make Your Guess</h2>
           <div className="subtitle" style={{ marginBottom: 16 }}>
