@@ -61,32 +61,32 @@ export default function GuessHistory({ guesses }: { guesses: Guess[] }) {
   };
 
   return (
-    <div className="guess-history card centered" style={{ fontSize: '2em', padding: '4em', minWidth: 900, maxWidth: 1400 }}>
-      <h3 className="title" style={{ fontSize: '2.2em', marginBottom: '1.2em' }}>Guess History</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: '90px 2.5fr 1fr 1fr 1fr 1fr', alignItems: 'right', marginBottom: 12, fontWeight: 600, color: '#a1a1aa', gap: '20px' }}>
+    <div className="guess-history card centered text-2xl md:text-2xl text-lg p-16 md:p-16 p-10 min-w-[900px] md:min-w-[900px] min-w-auto max-w-[1400px] md:max-w-[1400px] max-w-full">
+      <h3 className="title text-[2.2em] md:text-[2.2em] text-[1.32em] mb-5 md:mb-5 mb-3">Guess History</h3>
+      <div className="grid grid-cols-[90px_2.5fr_1fr_1fr_1fr_1fr] md:grid-cols-[90px_2.5fr_1fr_1fr_1fr_1fr] grid-cols-[54px_1.5fr_0.6fr_0.6fr_0.6fr_0.6fr] items-right mb-3 md:mb-3 mb-2 font-semibold text-gray-400 gap-5 md:gap-5 gap-3">
         <div style={{ visibility: 'hidden' }}>#</div>
         <div>Name</div>
-        <div style={{ textAlign: 'center' }}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;State</div>
-        <div style={{ textAlign: 'center' }}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Party</div>
-        <div style={{ textAlign: 'center' }}>&nbsp;&nbsp;&nbsp;&nbsp;Chamber</div>
-        <div style={{ textAlign: 'center' }}>State Proximity</div>
+        <div className="text-center">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;State</div>
+        <div className="text-center">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Party</div>
+        <div className="text-center">&nbsp;&nbsp;&nbsp;&nbsp;Chamber</div>
+        <div className="text-center">State Proximity</div>
       </div>
       {guesses.map((guess, index) => {
         const feedback = getStateFeedback(guess.state, (guess as any).actualState);
         return (
-          <div key={index} style={{ display: 'grid', gridTemplateColumns: '20px 2.5fr 1fr 1fr 1fr 1fr', alignItems: 'center', marginBottom: 24, gap: '16px', minHeight: 64 }}>
-            <div style={{ textAlign: 'center' }}>{index + 1}</div>
-            <div style={{ whiteSpace: 'normal', overflowWrap: 'anywhere', paddingRight: 24 }}>{formatGuess(guess)}</div>
-            <div style={{ textAlign: 'center' }}>
-              <span className={`feedback-bar ${guess.sameState ? 'feedback-correct' : 'feedback-wrong'}`} style={{ display: 'inline-block', minWidth: 48, minHeight: 48, fontSize: '1.2em', lineHeight: '48px', borderRadius: 12 }}>{guess.sameState ? '✓' : '✗'}</span>
+          <div key={index} className="grid grid-cols-[20px_2.5fr_1fr_1fr_1fr_1fr] md:grid-cols-[20px_2.5fr_1fr_1fr_1fr_1fr] grid-cols-[12px_1.5fr_0.6fr_0.6fr_0.6fr_0.6fr] items-center mb-6 md:mb-6 mb-4 gap-4 md:gap-4 gap-3 min-h-16 md:min-h-16 min-h-10">
+            <div className="text-center">{index + 1}</div>
+            <div className="whitespace-normal overflow-wrap-anywhere pr-6 md:pr-6 pr-4">{formatGuess(guess)}</div>
+            <div className="text-center">
+              <span className={`feedback-bar ${guess.sameState ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-12 md:min-w-12 min-w-7 min-h-12 md:min-h-12 min-h-7 text-[1.2em] md:text-[1.2em] text-[0.72em] leading-12 md:leading-12 leading-7 rounded-xl md:rounded-xl rounded-lg`}>{guess.sameState ? '✓' : '✗'}</span>
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <span className={`feedback-bar ${guess.sameParty ? 'feedback-correct' : 'feedback-wrong'}`} style={{ display: 'inline-block', minWidth: 48, minHeight: 48, fontSize: '1.2em', lineHeight: '48px', borderRadius: 12 }}>{guess.sameParty ? '✓' : '✗'}</span>
+            <div className="text-center">
+              <span className={`feedback-bar ${guess.sameParty ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-12 md:min-w-12 min-w-7 min-h-12 md:min-h-12 min-h-7 text-[1.2em] md:text-[1.2em] text-[0.72em] leading-12 md:leading-12 leading-7 rounded-xl md:rounded-xl rounded-lg`}>{guess.sameParty ? '✓' : '✗'}</span>
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <span className={`feedback-bar ${guess.sameChamber ? 'feedback-correct' : 'feedback-wrong'}`} style={{ display: 'inline-block', minWidth: 48, minHeight: 48, fontSize: '1.2em', lineHeight: '48px', borderRadius: 12 }}>{guess.sameChamber ? '✓' : '✗'}</span>
+            <div className="text-center">
+              <span className={`feedback-bar ${guess.sameChamber ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-12 md:min-w-12 min-w-7 min-h-12 md:min-h-12 min-h-7 text-[1.2em] md:text-[1.2em] text-[0.72em] leading-12 md:leading-12 leading-7 rounded-xl md:rounded-xl rounded-lg`}>{guess.sameChamber ? '✓' : '✗'}</span>
             </div>
-            <div style={{ textAlign: 'center', fontSize: '1.2em' }}>
+            <div className="text-center text-[1.2em] md:text-[1.2em] text-[0.72em]">
               <span className="feedback-arrow">{feedback.arrow} {feedback.percent}</span>
             </div>
           </div>
@@ -94,8 +94,8 @@ export default function GuessHistory({ guesses }: { guesses: Guess[] }) {
       })}
       {/* Empty slots for remaining guesses */}
       {Array.from({ length: 5 - guesses.length }, (_, index) => (
-        <div key={`empty-${index}`} style={{ display: 'grid', gridTemplateColumns: '20px 2.5fr 1fr 1fr 1fr 1fr', alignItems: 'center', marginBottom: 24, gap: '16px', minHeight: 64, opacity: 0.3 }}>
-          <div style={{ textAlign: 'center' }}>{guesses.length + index + 1}</div>
+        <div key={`empty-${index}`} className="grid grid-cols-[20px_2.5fr_1fr_1fr_1fr_1fr] md:grid-cols-[20px_2.5fr_1fr_1fr_1fr_1fr] grid-cols-[12px_1.5fr_0.6fr_0.6fr_0.6fr_0.6fr] items-center mb-6 md:mb-6 mb-4 gap-4 md:gap-4 gap-3 min-h-16 md:min-h-16 min-h-10 opacity-30">
+          <div className="text-center">{guesses.length + index + 1}</div>
           <div>&nbsp;</div>
           <div></div>
           <div></div>
@@ -103,7 +103,7 @@ export default function GuessHistory({ guesses }: { guesses: Guess[] }) {
           <div></div>
         </div>
       ))}
-      <div className="legend" style={{ fontSize: '0.7em', marginTop: 32 }}>
+      <div className="legend text-[0.7em] md:text-[0.7em] text-[0.42em] mt-8 md:mt-8 mt-5">
         <span><span className="legend-dot legend-correct"></span>Correct</span>
         <span><span className="legend-dot legend-wrong"></span>Wrong</span>
       </div>
