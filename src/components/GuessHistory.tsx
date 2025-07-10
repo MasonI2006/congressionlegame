@@ -13,7 +13,6 @@ export type Guess = {
   state?: string;
 };
 
-// Helper to compute distance and direction
 function getStateFeedback(guessedState: string | undefined, actualState: string | undefined) {
   if (!guessedState || !actualState) return { arrow: '❓', percent: '--' };
   const g = stateCoords[guessedState];
@@ -22,20 +21,18 @@ function getStateFeedback(guessedState: string | undefined, actualState: string 
   const dx = a.x - g.x;
   const dy = a.y - g.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
-  // Max possible distance is sqrt(1^2 + 1^2) = ~1.414
   const percent = Math.max(0, 100 - Math.round((dist / 1.414) * 100));
-  // Direction
   const threshold = 0.02;
   let arrow = '⬆️';
   if (percent === 100) arrow = '✅';
-  else if (Math.abs(dx) < threshold && dy > threshold) arrow = '⬆️'; // north
-  else if (Math.abs(dx) < threshold && dy < -threshold) arrow = '⬇️'; // south
-  else if (dx > threshold && Math.abs(dy) < threshold) arrow = '➡️'; // east
-  else if (dx < -threshold && Math.abs(dy) < threshold) arrow = '⬅️'; // west
-  else if (dx > threshold && dy > threshold) arrow = '↗️'; // northeast
-  else if (dx > threshold && dy < -threshold) arrow = '↘️'; // southeast
-  else if (dx < -threshold && dy > threshold) arrow = '↖️'; // northwest
-  else if (dx < -threshold && dy < -threshold) arrow = '↙️'; // southwest
+  else if (Math.abs(dx) < threshold && dy > threshold) arrow = '⬆️';
+  else if (Math.abs(dx) < threshold && dy < -threshold) arrow = '⬇️';
+  else if (dx > threshold && Math.abs(dy) < threshold) arrow = '➡️';
+  else if (dx < -threshold && Math.abs(dy) < threshold) arrow = '⬅️';
+  else if (dx > threshold && dy > threshold) arrow = '↗️';
+  else if (dx > threshold && dy < -threshold) arrow = '↘️';
+  else if (dx < -threshold && dy > threshold) arrow = '↖️';
+  else if (dx < -threshold && dy < -threshold) arrow = '↙️';
   return { arrow, percent: `${percent}%` };
 }
 
@@ -48,12 +45,7 @@ export default function GuessHistory({ guesses }: { guesses: Guess[] }) {
     );
   }
 
-  // Helper to format guess display
   const formatGuess = (guess: Guess) => {
-    // Try to extract party and state from the guess string if present
-    // (Assumes guess string is just the name, so fallback to just name)
-    // In a real app, you would want to pass the full member object or look it up
-    // For now, just show the name
     if (guess.party && guess.state) {
       return `${guess.guess} (${guess.party}-${guess.state})`;
     }
@@ -61,49 +53,80 @@ export default function GuessHistory({ guesses }: { guesses: Guess[] }) {
   };
 
   return (
-    <div className="guess-history card centered text-2xl md:text-2xl text-lg p-16 md:p-16 p-10 min-w-[900px] md:min-w-[900px] min-w-auto max-w-[1400px] md:max-w-[1400px] max-w-full">
-      <h3 className="title text-[2.2em] md:text-[2.2em] text-[1.32em] mb-5 md:mb-5 mb-3">Guess History</h3>
-      <div className="grid grid-cols-[90px_2.5fr_1fr_1fr_1fr_1fr] md:grid-cols-[90px_2.5fr_1fr_1fr_1fr_1fr] grid-cols-[54px_1.5fr_0.6fr_0.6fr_0.6fr_0.6fr] items-right mb-3 md:mb-3 mb-2 font-semibold text-gray-400 gap-5 md:gap-5 gap-3">
-        <div style={{ visibility: 'hidden' }}>#</div>
-        <div>Name</div>
-        <div className="text-center">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;State</div>
-        <div className="text-center">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Party</div>
-        <div className="text-center">&nbsp;&nbsp;&nbsp;&nbsp;Chamber</div>
-        <div className="text-center">State Proximity</div>
+    <div className="guess-history card centered w-full max-w-[1400px] p-4 md:p-16">
+      <h3 className="title text-2xl md:text-[2.2em] mb-4 md:mb-8">Guess History</h3>
+      {/* Desktop Table Layout */}
+      <div className="hidden md:block">
+        <div className="grid grid-cols-[90px_2.5fr_1fr_1fr_1fr_1fr] items-right mb-3 font-semibold text-gray-400 gap-5">
+          <div style={{ visibility: 'hidden' }}>#</div>
+          <div>Name</div>
+          <div className="text-center">State</div>
+          <div className="text-center">Party</div>
+          <div className="text-center">Chamber</div>
+          <div className="text-center">State Proximity</div>
+        </div>
+        {guesses.map((guess, index) => {
+          const feedback = getStateFeedback(guess.state, (guess as any).actualState);
+          return (
+            <div key={index} className="grid grid-cols-[20px_2.5fr_1fr_1fr_1fr_1fr] items-center mb-6 gap-4 min-h-16">
+              <div className="text-center">{index + 1}</div>
+              <div className="whitespace-normal overflow-wrap-anywhere pr-6">{formatGuess(guess)}</div>
+              <div className="text-center">
+                <span className={`feedback-bar ${guess.sameState ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-12 min-h-12 text-[1.2em] leading-12 rounded-xl`}>{guess.sameState ? '✓' : '✗'}</span>
+              </div>
+              <div className="text-center">
+                <span className={`feedback-bar ${guess.sameParty ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-12 min-h-12 text-[1.2em] leading-12 rounded-xl`}>{guess.sameParty ? '✓' : '✗'}</span>
+              </div>
+              <div className="text-center">
+                <span className={`feedback-bar ${guess.sameChamber ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-12 min-h-12 text-[1.2em] leading-12 rounded-xl`}>{guess.sameChamber ? '✓' : '✗'}</span>
+              </div>
+              <div className="text-center text-[1.2em]">
+                <span className="feedback-arrow">{feedback.arrow} {feedback.percent}</span>
+              </div>
+            </div>
+          );
+        })}
+        {/* Empty slots for remaining guesses */}
+        {Array.from({ length: 5 - guesses.length }, (_, index) => (
+          <div key={`empty-${index}`} className="grid grid-cols-[20px_2.5fr_1fr_1fr_1fr_1fr] items-center mb-6 gap-4 min-h-16 opacity-30">
+            <div className="text-center">{guesses.length + index + 1}</div>
+            <div>&nbsp;</div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        ))}
       </div>
-      {guesses.map((guess, index) => {
-        const feedback = getStateFeedback(guess.state, (guess as any).actualState);
-        return (
-          <div key={index} className="grid grid-cols-[20px_2.5fr_1fr_1fr_1fr_1fr] md:grid-cols-[20px_2.5fr_1fr_1fr_1fr_1fr] grid-cols-[12px_1.5fr_0.6fr_0.6fr_0.6fr_0.6fr] items-center mb-6 md:mb-6 mb-4 gap-4 md:gap-4 gap-3 min-h-16 md:min-h-16 min-h-10">
-            <div className="text-center">{index + 1}</div>
-            <div className="whitespace-normal overflow-wrap-anywhere pr-6 md:pr-6 pr-4">{formatGuess(guess)}</div>
-            <div className="text-center">
-              <span className={`feedback-bar ${guess.sameState ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-12 md:min-w-12 min-w-7 min-h-12 md:min-h-12 min-h-7 text-[1.2em] md:text-[1.2em] text-[0.72em] leading-12 md:leading-12 leading-7 rounded-xl md:rounded-xl rounded-lg`}>{guess.sameState ? '✓' : '✗'}</span>
+      {/* Mobile Card Layout */}
+      <div className="md:hidden flex flex-col gap-4">
+        {guesses.map((guess, index) => {
+          const feedback = getStateFeedback(guess.state, (guess as any).actualState);
+          return (
+            <div key={index} className="bg-zinc-800 rounded-xl p-3 flex flex-col gap-1 shadow-md">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-semibold text-base text-gray-400">Guess {index + 1}</span>
+                <span className="text-xs text-gray-400">{feedback.arrow} {feedback.percent}</span>
+              </div>
+              <div className="text-sm"><span className="font-semibold text-gray-400">Name:</span> {formatGuess(guess)}</div>
+              <div className="text-sm flex flex-wrap gap-2 mt-1">
+                <span><span className="font-semibold text-gray-400">State:</span> <span className={`feedback-bar ${guess.sameState ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-7 min-h-7 text-base leading-7 rounded-lg align-middle mr-1`}>{guess.sameState ? '✓' : '✗'}</span></span>
+                <span><span className="font-semibold text-gray-400">Party:</span> <span className={`feedback-bar ${guess.sameParty ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-7 min-h-7 text-base leading-7 rounded-lg align-middle mr-1`}>{guess.sameParty ? '✓' : '✗'}</span></span>
+                <span><span className="font-semibold text-gray-400">Chamber:</span> <span className={`feedback-bar ${guess.sameChamber ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-7 min-h-7 text-base leading-7 rounded-lg align-middle mr-1`}>{guess.sameChamber ? '✓' : '✗'}</span></span>
+              </div>
             </div>
-            <div className="text-center">
-              <span className={`feedback-bar ${guess.sameParty ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-12 md:min-w-12 min-w-7 min-h-12 md:min-h-12 min-h-7 text-[1.2em] md:text-[1.2em] text-[0.72em] leading-12 md:leading-12 leading-7 rounded-xl md:rounded-xl rounded-lg`}>{guess.sameParty ? '✓' : '✗'}</span>
-            </div>
-            <div className="text-center">
-              <span className={`feedback-bar ${guess.sameChamber ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-12 md:min-w-12 min-w-7 min-h-12 md:min-h-12 min-h-7 text-[1.2em] md:text-[1.2em] text-[0.72em] leading-12 md:leading-12 leading-7 rounded-xl md:rounded-xl rounded-lg`}>{guess.sameChamber ? '✓' : '✗'}</span>
-            </div>
-            <div className="text-center text-[1.2em] md:text-[1.2em] text-[0.72em]">
-              <span className="feedback-arrow">{feedback.arrow} {feedback.percent}</span>
+          );
+        })}
+        {/* Empty slots for remaining guesses */}
+        {Array.from({ length: 5 - guesses.length }, (_, index) => (
+          <div key={`empty-mobile-${index}`} className="bg-zinc-800 rounded-xl p-3 flex flex-col gap-1 shadow-md opacity-30">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-semibold text-base text-gray-400">Guess {guesses.length + index + 1}</span>
             </div>
           </div>
-        );
-      })}
-      {/* Empty slots for remaining guesses */}
-      {Array.from({ length: 5 - guesses.length }, (_, index) => (
-        <div key={`empty-${index}`} className="grid grid-cols-[20px_2.5fr_1fr_1fr_1fr_1fr] md:grid-cols-[20px_2.5fr_1fr_1fr_1fr_1fr] grid-cols-[12px_1.5fr_0.6fr_0.6fr_0.6fr_0.6fr] items-center mb-6 md:mb-6 mb-4 gap-4 md:gap-4 gap-3 min-h-16 md:min-h-16 min-h-10 opacity-30">
-          <div className="text-center">{guesses.length + index + 1}</div>
-          <div>&nbsp;</div>
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
-        </div>
-      ))}
-      <div className="legend text-[0.7em] md:text-[0.7em] text-[0.42em] mt-8 md:mt-8 mt-5">
+        ))}
+      </div>
+      <div className="legend text-xs md:text-[0.7em] mt-6 md:mt-8 flex gap-4">
         <span><span className="legend-dot legend-correct"></span>Correct</span>
         <span><span className="legend-dot legend-wrong"></span>Wrong</span>
       </div>
