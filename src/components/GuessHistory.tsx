@@ -55,84 +55,53 @@ export default function GuessHistory({ guesses }: { guesses: Guess[] }) {
   return (
     <div className="guess-history card centered w-full max-w-[1400px] p-4 md:p-16">
       <h3 className="title text-2xl md:text-[2.2em] mb-4 md:mb-8">Guess History</h3>
-      {/* Desktop Table Layout */}
-      <div className="hidden md:block">
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-left border-separate border-spacing-y-2">
-            <thead>
-              <tr className="text-gray-400 font-semibold text-lg">
-                <th className="px-2">#</th>
-                <th className="px-2">Name</th>
-                <th className="px-2 text-center">State</th>
-                <th className="px-2 text-center">Party</th>
-                <th className="px-2 text-center">Chamber</th>
-                <th className="px-2 text-center">State Proximity</th>
-              </tr>
-            </thead>
-            <tbody>
-              {guesses.map((guess, index) => {
-                const feedback = getStateFeedback(guess.state, (guess as any).actualState);
-                return (
-                  <tr key={index} className="align-middle">
-                    <td className="px-2 text-center font-bold">{index + 1}</td>
-                    <td className="px-2 whitespace-normal break-words">{formatGuess(guess)}</td>
-                    <td className="px-2 text-center">
-                      <span className={`feedback-bar ${guess.sameState ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-10 min-h-10 text-lg leading-10 rounded-lg`}>{guess.sameState ? '✓' : '✗'}</span>
-                    </td>
-                    <td className="px-2 text-center">
-                      <span className={`feedback-bar ${guess.sameParty ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-10 min-h-10 text-lg leading-10 rounded-lg`}>{guess.sameParty ? '✓' : '✗'}</span>
-                    </td>
-                    <td className="px-2 text-center">
-                      <span className={`feedback-bar ${guess.sameChamber ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-10 min-h-10 text-lg leading-10 rounded-lg`}>{guess.sameChamber ? '✓' : '✗'}</span>
-                    </td>
-                    <td className="px-2 text-center text-lg">
-                      <span className="feedback-arrow">{feedback.arrow} {feedback.percent}</span>
-                    </td>
-                  </tr>
-                );
-              })}
-              {/* Empty slots for remaining guesses */}
-              {Array.from({ length: 5 - guesses.length }, (_, index) => (
-                <tr key={`empty-${index}`} className="opacity-30 align-middle">
-                  <td className="px-2 text-center font-bold">{guesses.length + index + 1}</td>
-                  <td className="px-2">&nbsp;</td>
-                  <td className="px-2"></td>
-                  <td className="px-2"></td>
-                  <td className="px-2"></td>
-                  <td className="px-2"></td>
+      <div className="w-full overflow-x-auto">
+        <table className="w-full text-left border-separate border-spacing-y-2">
+          <thead>
+            <tr className="text-gray-400 font-semibold text-lg">
+              <th className="px-2">#</th>
+              <th className="px-2">Name</th>
+              <th className="px-2 text-center">State</th>
+              <th className="px-2 text-center">Party</th>
+              <th className="px-2 text-center">Chamber</th>
+              <th className="px-2 text-center">State Proximity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {guesses.map((guess, index) => {
+              const feedback = getStateFeedback(guess.state, (guess as any).actualState);
+              return (
+                <tr key={index} className="align-middle">
+                  <td className="px-2 text-center font-bold">{index + 1}</td>
+                  <td className="px-2 whitespace-normal break-words">{formatGuess(guess)}</td>
+                  <td className="px-2 text-center">
+                    <span className={`feedback-bar ${guess.sameState ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-10 min-h-10 text-lg leading-10 rounded-lg`}>{guess.sameState ? '✓' : '✗'}</span>
+                  </td>
+                  <td className="px-2 text-center">
+                    <span className={`feedback-bar ${guess.sameParty ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-10 min-h-10 text-lg leading-10 rounded-lg`}>{guess.sameParty ? '✓' : '✗'}</span>
+                  </td>
+                  <td className="px-2 text-center">
+                    <span className={`feedback-bar ${guess.sameChamber ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-10 min-h-10 text-lg leading-10 rounded-lg`}>{guess.sameChamber ? '✓' : '✗'}</span>
+                  </td>
+                  <td className="px-2 text-center text-lg">
+                    <span className="feedback-arrow">{feedback.arrow} {feedback.percent}</span>
+                  </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      {/* Mobile Card Layout */}
-      <div className="md:hidden flex flex-col gap-4">
-        {guesses.map((guess, index) => {
-          const feedback = getStateFeedback(guess.state, (guess as any).actualState);
-          return (
-            <div key={index} className="bg-zinc-800 rounded-xl p-3 flex flex-col gap-1 shadow-md">
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-semibold text-base text-gray-400">Guess {index + 1}</span>
-                <span className="text-xs text-gray-400">{feedback.arrow} {feedback.percent}</span>
-              </div>
-              <div className="text-sm"><span className="font-semibold text-gray-400">Name:</span> {formatGuess(guess)}</div>
-              <div className="text-sm flex flex-wrap gap-2 mt-1">
-                <span><span className="font-semibold text-gray-400">State:</span> <span className={`feedback-bar ${guess.sameState ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-7 min-h-7 text-base leading-7 rounded-lg align-middle mr-1`}>{guess.sameState ? '✓' : '✗'}</span></span>
-                <span><span className="font-semibold text-gray-400">Party:</span> <span className={`feedback-bar ${guess.sameParty ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-7 min-h-7 text-base leading-7 rounded-lg align-middle mr-1`}>{guess.sameParty ? '✓' : '✗'}</span></span>
-                <span><span className="font-semibold text-gray-400">Chamber:</span> <span className={`feedback-bar ${guess.sameChamber ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-7 min-h-7 text-base leading-7 rounded-lg align-middle mr-1`}>{guess.sameChamber ? '✓' : '✗'}</span></span>
-              </div>
-            </div>
-          );
-        })}
-        {/* Empty slots for remaining guesses */}
-        {Array.from({ length: 5 - guesses.length }, (_, index) => (
-          <div key={`empty-mobile-${index}`} className="bg-zinc-800 rounded-xl p-3 flex flex-col gap-1 shadow-md opacity-30">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-semibold text-base text-gray-400">Guess {guesses.length + index + 1}</span>
-            </div>
-          </div>
-        ))}
+              );
+            })}
+            {/* Empty slots for remaining guesses */}
+            {Array.from({ length: 5 - guesses.length }, (_, index) => (
+              <tr key={`empty-${index}`} className="opacity-30 align-middle">
+                <td className="px-2 text-center font-bold">{guesses.length + index + 1}</td>
+                <td className="px-2">&nbsp;</td>
+                <td className="px-2"></td>
+                <td className="px-2"></td>
+                <td className="px-2"></td>
+                <td className="px-2"></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
       <div className="legend text-xs md:text-[0.7em] mt-6 md:mt-8 flex gap-4">
         <span><span className="legend-dot legend-correct"></span>Correct</span>
