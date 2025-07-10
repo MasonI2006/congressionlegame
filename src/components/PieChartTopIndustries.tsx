@@ -4,7 +4,7 @@ import React from 'react';
 const COLORS = ['#F59E42', '#60A5FA', '#34D399', '#F472B6', '#A78BFA'];
 
 export default function PieChartTopIndustries({ data }: { data: { name: string; share: number; amount: number }[] }) {
-  if (!data || data === 'none' || data.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <div className="card centered" style={{ margin: '0 64px', minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <h3 className="title" style={{ fontSize: '1.3em' }}>No data available for top industries</h3>

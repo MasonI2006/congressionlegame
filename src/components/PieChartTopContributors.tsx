@@ -4,7 +4,7 @@ import React from 'react';
 const COLORS = ['#8B5CF6', '#EC4899', '#F97316', '#06B6D4', '#84CC16'];
 
 export default function PieChartTopContributors({ data }: { data: { name: string; share: number; amount: number }[] }) {
-  if (!data || data === 'none' || data.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <div className="card centered" style={{ margin: '0 64px', minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <h3 className="title" style={{ fontSize: '1.3em' }}>No data available for top contributors</h3>
