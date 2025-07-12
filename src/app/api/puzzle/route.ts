@@ -15,5 +15,13 @@ export async function GET() {
   const index = Math.floor(random * roster.length);
   const member = roster[index];
   const puzzle = getPuzzleForMember(member);
-  return NextResponse.json(puzzle);
+  
+  // Add cache control headers to prevent caching
+  return NextResponse.json(puzzle, {
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
+  });
 } 
