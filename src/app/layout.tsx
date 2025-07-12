@@ -6,6 +6,10 @@ import { GameProvider } from '../context/GameContext';
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+        <title>Congressionle - Guess the Member of Congress</title>
+      </head>
       <body className="bg-gray-50 min-h-screen font-sans">
         <GameProvider>
           <header style={{ width: '100%', textAlign: 'center', margin: '32px 0 24px 0' }}>

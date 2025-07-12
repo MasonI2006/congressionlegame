@@ -138,6 +138,20 @@ export default function Game() {
             </div>
           </div>
         )}
+        <div className="card centered" style={{ width: '100%', maxWidth: 500, margin: '24px auto 0 auto', fontSize: '0.9em', color: '#a1a1aa' }}>
+          <div style={{ textAlign: 'center' }}>
+            <span>Campaign finance data was sourced from </span>
+            <a href="https://www.opensecrets.org/" target="_blank" rel="noopener noreferrer" style={{ color: '#a3e635', fontWeight: 600, textDecoration: 'none' }}>
+              OpenSecrets
+            </a>
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 4 }}>
+            <span>Stock data was sourced from </span>
+            <a href="https://www.capitoltrades.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#a3e635', fontWeight: 600, textDecoration: 'none' }}>
+              CapitolTrades
+            </a>
+          </div>
+        </div>
       </div>
     </>
   );
