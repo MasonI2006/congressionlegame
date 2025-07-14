@@ -32,24 +32,13 @@ export default function Game() {
       .then(data => {
         dispatch({ type: 'INIT', payload: data });
         setIsLoading(false);
+        setReady(true);
       })
-      .catch(() => setIsLoading(false));
+      .catch(() => {
+        setIsLoading(false);
+        setReady(true);
+      });
   }, [dispatch]);
-
-  // Refresh puzzle daily
-  useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    const lastDate = localStorage.getItem('congressionle-last-date');
-    
-    // Force refresh if no last date or if dates don't match
-    if (!lastDate || lastDate !== today) {
-      localStorage.setItem('congressionle-last-date', today);
-      localStorage.removeItem('gtr-state'); // Clear guesses and solved state
-      window.location.reload();
-    } else {
-      setReady(true);
-    }
-  }, []);
 
   useEffect(() => {
     if (

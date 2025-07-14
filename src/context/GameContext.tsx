@@ -57,13 +57,33 @@ function GameProvider({ children }: { children: React.ReactNode }) {
   const [isClient, setIsClient] = useState(false);
   const [state, dispatch] = useReducer(gameReducer, initialState);
 
+  // Helper function to get today's date string
+  const getTodayString = () => {
+    return new Date().toISOString().slice(0, 10);
+  };
+
   // Ensure we're on the client before accessing localStorage
   useEffect(() => {
     setIsClient(true);
+    
+    // Check if we need to refresh for a new day
+    const today = getTodayString();
+    const lastDate = localStorage.getItem('congressionle-last-date');
+    
+    // If it's a new day, clear the saved state
+    if (!lastDate || lastDate !== today) {
+      console.log('New day detected, clearing saved state:', { lastDate, today });
+      localStorage.setItem('congressionle-last-date', today);
+      localStorage.removeItem('gtr-state');
+      return; // Don't restore old state, let the Game component fetch new puzzle
+    }
+    
+    // Only restore saved state if it's the same day
     const saved = localStorage.getItem('gtr-state');
     if (saved) {
       try {
         const parsedState = JSON.parse(saved);
+        console.log('Restoring saved state for today:', today);
         dispatch({ type: 'INIT', payload: parsedState.puzzle });
         // Restore guesses and solved state
         if (parsedState.guesses) {

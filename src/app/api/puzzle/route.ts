@@ -16,6 +16,8 @@ export async function GET() {
   const member = roster[index];
   const puzzle = getPuzzleForMember(member);
   
+  console.log('Puzzle API called for date:', today, 'Selected member:', member.fullName, 'Index:', index);
+  
   // Add cache control headers to prevent caching
   return NextResponse.json(puzzle, {
     headers: {
