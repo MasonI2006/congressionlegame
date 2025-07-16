@@ -8,15 +8,21 @@ function seededRandom(seed: number) {
 }
 
 export async function GET() {
-  const today = new Date().toISOString().slice(0, 10); // e.g., '2024-06-30'
-  // Convert date to a number seed (e.g., 20240630)
-  const seed = parseInt(today.split('-').join(''), 10);
+  // Use 24-hour periods instead of calendar days
+  const now = Date.now();
+  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+  
+  // Calculate which 24-hour period we're in since epoch
+  const periodNumber = Math.floor(now / TWENTY_FOUR_HOURS);
+  
+  // Use period number as seed for deterministic randomization
+  const seed = periodNumber;
   const random = seededRandom(seed);
   const index = Math.floor(random * roster.length);
   const member = roster[index];
   const puzzle = getPuzzleForMember(member);
   
-  console.log('Puzzle API called for date:', today, 'Selected member:', member.fullName, 'Index:', index);
+  console.log('Puzzle API called for 24-hour period:', periodNumber, 'Selected member:', member.fullName, 'Index:', index);
   
   // Add cache control headers to prevent caching
   return NextResponse.json(puzzle, {

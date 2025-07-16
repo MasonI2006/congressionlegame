@@ -20,25 +20,62 @@ export default function Game() {
   const [lastConfettiGuess, setLastConfettiGuess] = useState(-1);
   const [ready, setReady] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [timeUntilNext, setTimeUntilNext] = useState('');
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Update countdown timer every second
   useEffect(() => {
-    // Fetch today's puzzle
-    fetch('/api/puzzle')
-      .then(res => res.json())
-      .then(data => {
-        dispatch({ type: 'INIT', payload: data });
-        setIsLoading(false);
-        setReady(true);
-      })
-      .catch(() => {
-        setIsLoading(false);
-        setReady(true);
-      });
-  }, [dispatch]);
+    const updateCountdown = () => {
+      const timestamp = localStorage.getItem('congressionle-puzzle-timestamp');
+      if (timestamp) {
+        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+        const puzzleTime = parseInt(timestamp, 10);
+        const nextPuzzleTime = puzzleTime + TWENTY_FOUR_HOURS;
+        const now = Date.now();
+        const timeLeft = nextPuzzleTime - now;
+        
+        if (timeLeft > 0) {
+          const hours = Math.floor(timeLeft / (60 * 60 * 1000));
+          const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
+          const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
+          setTimeUntilNext(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        } else {
+          setTimeUntilNext('00:00:00');
+        }
+      }
+    };
+
+    updateCountdown(); // Initial call
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    // Only fetch puzzle if we don't already have one (from GameContext restoration)
+    if (!state.puzzle) {
+      // Fetch today's puzzle
+      fetch('/api/puzzle')
+        .then(res => res.json())
+        .then(data => {
+          dispatch({ type: 'INIT', payload: data });
+          // Set timestamp when new puzzle is loaded
+          localStorage.setItem('congressionle-puzzle-timestamp', Date.now().toString());
+          setIsLoading(false);
+          setReady(true);
+        })
+        .catch(() => {
+          setIsLoading(false);
+          setReady(true);
+        });
+    } else {
+      // If we already have a puzzle (restored from localStorage), just mark as ready
+      setIsLoading(false);
+      setReady(true);
+    }
+  }, [dispatch, state.puzzle]);
 
   useEffect(() => {
     if (
@@ -117,6 +154,14 @@ export default function Game() {
             Visit my website: masonistre.dev
           </a>
         </div>
+        {timeUntilNext && (
+          <div className="card centered" style={{ width: '100%', maxWidth: 500, margin: '16px auto 0 auto', fontSize: '1.1em' }}>
+            <div style={{ color: '#a1a1aa', marginBottom: 4 }}>Next puzzle in:</div>
+            <div style={{ fontSize: '1.3em', fontWeight: 700, color: '#22d3ee' }}>
+              {timeUntilNext}
+            </div>
+          </div>
+        )}
         {(state.solved || state.guesses.length >= 5) && state.puzzle && state.puzzle.answer && (
           <div className="card centered" style={{ border: '2px solid #22c55e', marginTop: 24 }}>
             <div style={{ fontSize: '2em', fontWeight: 700, color: '#a3e635', marginBottom: 8 }}>
