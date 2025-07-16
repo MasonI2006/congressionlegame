@@ -84,7 +84,7 @@ function GameProvider({ children }: { children: React.ReactNode }) {
       console.log('24 hours have passed, clearing saved state and resetting timer');
       localStorage.removeItem('gtr-state');
       localStorage.removeItem('congressionle-last-date');
-      setPuzzleTimestamp();
+      // Don't set timestamp here - let Game component set it when fetching new puzzle
       return; // Don't restore old state, let the Game component fetch new puzzle
     }
     
@@ -122,7 +122,7 @@ function GameProvider({ children }: { children: React.ReactNode }) {
         console.log('24-hour timer expired, forcing puzzle reset');
         localStorage.removeItem('gtr-state');
         localStorage.removeItem('congressionle-last-date');
-        setPuzzleTimestamp();
+        localStorage.removeItem('congressionle-puzzle-timestamp'); // Clear old timestamp
         window.location.reload(); // Force refresh to get new puzzle
       }
     };

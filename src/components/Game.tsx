@@ -61,8 +61,12 @@ export default function Game() {
         .then(res => res.json())
         .then(data => {
           dispatch({ type: 'INIT', payload: data });
-          // Set timestamp when new puzzle is loaded
-          localStorage.setItem('congressionle-puzzle-timestamp', Date.now().toString());
+          // Only set timestamp when fetching a completely new puzzle
+          // (not when restoring from localStorage)
+          const existingTimestamp = localStorage.getItem('congressionle-puzzle-timestamp');
+          if (!existingTimestamp) {
+            localStorage.setItem('congressionle-puzzle-timestamp', Date.now().toString());
+          }
           setIsLoading(false);
           setReady(true);
         })
