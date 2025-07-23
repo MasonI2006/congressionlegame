@@ -2,11 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { useContext } from 'react';
 import { GameContext } from '../context/GameContext';
+import { roster, getPuzzleForMember } from '../lib/data';
 import PieChartFinance from './PieChartFinance';
 import PieChartTopContributors from './PieChartTopContributors';
 import PieChartTopIndustries from './PieChartTopIndustries';
 import StockCard from './StockCard';
-import ElectionCard from './ElectionCard';
+import CommitteeCard from './CommitteeCard';
+import CorporatePACCard from './CorporatePACCard';
 import GuessInput from './GuessInput';
 import GuessHistory from './GuessHistory';
 import Confetti from 'react-confetti';
@@ -21,9 +23,22 @@ export default function Game() {
   const [ready, setReady] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [timeUntilNext, setTimeUntilNext] = useState('');
+  const [isNarrowAspectRatio, setIsNarrowAspectRatio] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Check for narrow aspect ratio
+  useEffect(() => {
+    const checkAspectRatio = () => {
+      const aspectRatio = window.innerWidth / window.innerHeight;
+      setIsNarrowAspectRatio(aspectRatio < 1.2); // Consider narrow if width/height < 1.2
+    };
+
+    checkAspectRatio();
+    window.addEventListener('resize', checkAspectRatio);
+    return () => window.removeEventListener('resize', checkAspectRatio);
   }, []);
 
   // Update countdown timer every second
@@ -31,19 +46,22 @@ export default function Game() {
     const updateCountdown = () => {
       const timestamp = localStorage.getItem('congressionle-puzzle-timestamp');
       if (timestamp) {
-        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+        const SIXTY_SECONDS = 60 * 1000; // 60 seconds in milliseconds
         const puzzleTime = parseInt(timestamp, 10);
-        const nextPuzzleTime = puzzleTime + TWENTY_FOUR_HOURS;
+        const currentPeriod = Math.floor(puzzleTime / SIXTY_SECONDS);
+        const nextPeriodTime = (currentPeriod + 1) * SIXTY_SECONDS;
         const now = Date.now();
-        const timeLeft = nextPuzzleTime - now;
+        const timeLeft = nextPeriodTime - now;
         
         if (timeLeft > 0) {
-          const hours = Math.floor(timeLeft / (60 * 60 * 1000));
-          const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
-          const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
-          setTimeUntilNext(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+          const seconds = Math.floor(timeLeft / 1000);
+          setTimeUntilNext(`${seconds.toString().padStart(2, '0')}s`);
         } else {
-          setTimeUntilNext('00:00:00');
+          setTimeUntilNext('00s');
+          // Trigger new puzzle fetch when time runs out
+          if (state.puzzle) {
+            fetchNewPuzzle();
+          }
         }
       }
     };
@@ -51,29 +69,50 @@ export default function Game() {
     updateCountdown(); // Initial call
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [state.puzzle]);
+
+  // Function to get current puzzle based on 60-second periods
+  const getCurrentPuzzle = () => {
+    const now = Date.now();
+    const SIXTY_SECONDS = 60 * 1000;
+    const periodNumber = Math.floor(now / SIXTY_SECONDS);
+    
+    // Deterministic selection based on period
+    const seed = periodNumber * 9301 + 49297; // Simple LCG
+    const random = (seed % 233280) / 233280;
+    const index = Math.floor(random * roster.length);
+    
+    return roster[index];
+  };
+
+  // Function to fetch a new puzzle
+  const fetchNewPuzzle = () => {
+    const member = getCurrentPuzzle();
+    const puzzle = getPuzzleForMember(member);
+    
+    dispatch({ type: 'RESET' });
+    dispatch({ type: 'INIT', payload: puzzle });
+    localStorage.setItem('congressionle-puzzle-timestamp', Date.now().toString());
+    console.log('Fetched new puzzle for new 60-second period:', member.fullName);
+  };
 
   useEffect(() => {
     // Only fetch puzzle if we don't already have one (from GameContext restoration)
     if (!state.puzzle) {
-      // Fetch today's puzzle
-      fetch('/api/puzzle')
-        .then(res => res.json())
-        .then(data => {
-          dispatch({ type: 'INIT', payload: data });
-          // Only set timestamp when fetching a completely new puzzle
-          // (not when restoring from localStorage)
-          const existingTimestamp = localStorage.getItem('congressionle-puzzle-timestamp');
-          if (!existingTimestamp) {
-            localStorage.setItem('congressionle-puzzle-timestamp', Date.now().toString());
-          }
-          setIsLoading(false);
-          setReady(true);
-        })
-        .catch(() => {
-          setIsLoading(false);
-          setReady(true);
-        });
+      // Get current puzzle based on client-side calculation
+      const member = getCurrentPuzzle();
+      const puzzle = getPuzzleForMember(member);
+      
+      dispatch({ type: 'INIT', payload: puzzle });
+      
+      // Only set timestamp when fetching a completely new puzzle
+      const existingTimestamp = localStorage.getItem('congressionle-puzzle-timestamp');
+      if (!existingTimestamp) {
+        localStorage.setItem('congressionle-puzzle-timestamp', Date.now().toString());
+      }
+      setIsLoading(false);
+      setReady(true);
+      console.log('Loaded puzzle for:', member.fullName);
     } else {
       // If we already have a puzzle (restored from localStorage), just mark as ready
       setIsLoading(false);
@@ -117,7 +156,7 @@ export default function Game() {
         {state.puzzle && (
           <>
             <div style={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'center', marginBottom: 24 }}>
-              <PieChartFinance data={state.puzzle.financeMix} />
+              <PieChartFinance data={state.puzzle.financeMix} totalRaised={state.puzzle.amountRaised} />
               <div style={{ marginLeft: -32 }}>
                 <PieChartTopContributors data={state.puzzle.topContributors} />
               </div>
@@ -125,19 +164,34 @@ export default function Game() {
                 <PieChartTopIndustries data={state.puzzle.topIndustries} />
               </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: 24, justifyContent: 'center', marginBottom: 24 }}>
-              <StockCard value={state.puzzle.stockValueUSD} tradesCount={state.puzzle.tradesCount} />
-              <ElectionCard firstElection={state.puzzle.answer.firstElection} nextElection={state.puzzle.answer.nextElection} />
-              {Array.isArray(state.puzzle.committees) && state.puzzle.committees.length > 0 && (
-                <div className="card centered" style={{ minWidth: 240, maxWidth: 240 }}>
-                  <h3 className="title" style={{ fontSize: '1.2em', marginBottom: 8 }}>Committees</h3>
-                  <ul style={{ listStyle: 'disc', paddingLeft: 24, textAlign: 'left' }}>
-                    {state.puzzle.committees.map((committee: string, idx: number) => (
-                      <li key={idx} style={{ marginBottom: 4 }}>{committee}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: isNarrowAspectRatio ? 'column' : 'row', 
+              gap: 12, 
+              justifyContent: 'center', 
+              alignItems: isNarrowAspectRatio ? 'center' : 'flex-start',
+              marginBottom: 24, 
+              flexWrap: 'nowrap',
+              overflowX: isNarrowAspectRatio ? 'visible' : 'auto'
+            }}>
+              <div style={{ flex: '0 0 auto', minWidth: 280, maxWidth: 320 }}>
+                <StockCard 
+                  value={state.puzzle.stockValueUSD} 
+                  tradesCount={state.puzzle.tradesCount}
+                  tickerHoldingCount={state.puzzle.tickerHoldingCount}
+                  currentNetWorth={state.puzzle.currentNetWorth}
+                />
+              </div>
+              <div style={{ flex: '0 0 auto', minWidth: 280, maxWidth: 320 }}>
+                <CorporatePACCard 
+                  corporatePACMoney={state.puzzle.corporatePACMoney}
+                  maxDonors={state.puzzle.maxDonors}
+                  uniqueDonors={state.puzzle.uniqueDonors}
+                />
+              </div>
+              <div style={{ flex: '0 0 auto', minWidth: 280, maxWidth: 320 }}>
+                <CommitteeCard committees={state.puzzle.committees} />
+              </div>
             </div>
           </>
         )}
@@ -160,7 +214,7 @@ export default function Game() {
         </div>
         {timeUntilNext && (
           <div className="card centered" style={{ width: '100%', maxWidth: 500, margin: '16px auto 0 auto', fontSize: '1.1em' }}>
-            <div style={{ color: '#a1a1aa', marginBottom: 4 }}>Next puzzle in:</div>
+            <div style={{ color: '#a1a1aa', marginBottom: 4 }}>New member in:</div>
             <div style={{ fontSize: '1.3em', fontWeight: 700, color: '#22d3ee' }}>
               {timeUntilNext}
             </div>
@@ -171,9 +225,62 @@ export default function Game() {
             <div style={{ fontSize: '2em', fontWeight: 700, color: '#a3e635', marginBottom: 8 }}>
               {state.puzzle.answer.fullName}
             </div>
-            <div style={{ color: '#a1a1aa', fontSize: '1.1em', marginBottom: 8 }}>
+            <div style={{ color: '#a1a1aa', fontSize: '1.1em', marginBottom: 12 }}>
               {state.puzzle.answer.state} &middot; {state.puzzle.answer.party === 'D' ? 'Democrat' : state.puzzle.answer.party === 'R' ? 'Republican' : 'Independent'}
             </div>
+            {state.puzzle.answer.photoUrl && (
+              <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {state.puzzle.answer.websiteUrl ? (
+                  <a 
+                    href={state.puzzle.answer.websiteUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ display: 'block', textDecoration: 'none' }}
+                  >
+                    <img 
+                      src={state.puzzle.answer.photoUrl} 
+                      alt={`Photo of ${state.puzzle.answer.fullName}`}
+                      style={{ 
+                        width: 120, 
+                        height: 150, 
+                        objectFit: 'cover', 
+                        borderRadius: 8, 
+                        border: '2px solid #374151',
+                        cursor: 'pointer',
+                        transition: 'border-color 0.2s ease'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.borderColor = '#22d3ee'}
+                      onMouseOut={(e) => e.currentTarget.style.borderColor = '#374151'}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                  </a>
+                ) : (
+                  <img 
+                    src={state.puzzle.answer.photoUrl} 
+                    alt={`Photo of ${state.puzzle.answer.fullName}`}
+                    style={{ 
+                      width: 120, 
+                      height: 150, 
+                      objectFit: 'cover', 
+                      borderRadius: 8, 
+                      border: '2px solid #374151'
+                    }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                )}
+                {state.puzzle.answer.websiteUrl && (
+                  <div style={{ marginTop: 8, fontSize: '0.9em', color: '#a1a1aa' }}>
+                    Click photo to visit official website
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
         <div className="card centered" style={{ width: '100%', maxWidth: 500, margin: '24px auto 0 auto', fontSize: '0.9em', color: '#a1a1aa' }}>
@@ -184,9 +291,9 @@ export default function Game() {
             </a>
           </div>
           <div style={{ textAlign: 'center', marginTop: 4 }}>
-            <span>Stock data was sourced from </span>
-            <a href="https://www.capitoltrades.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#a3e635', fontWeight: 600, textDecoration: 'none' }}>
-              CapitolTrades
+            <span>Stock and Corporate PAC data was sourced from </span>
+            <a href="https://www.quiverquant.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#a3e635', fontWeight: 600, textDecoration: 'none' }}>
+              Quiver Quantitative
             </a>
           </div>
         </div>

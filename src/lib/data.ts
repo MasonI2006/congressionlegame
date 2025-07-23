@@ -1,5 +1,4 @@
-import congressDataRaw from './congress_finance.json';
-import tradesDataRaw from './congress_trades.json';
+import congressDataRaw from '../CongressData/Main119thCongressData.json';
 
 export type FinanceMix = {
   large: { pct: number; amount: number };
@@ -27,15 +26,22 @@ export type RosterMember = {
   state: string;
   party: 'D' | 'R' | 'I';
   chamber: 'House' | 'Senate';
-  firstElection: number;
-  nextElection: number | string;
   financeMix: FinanceMix;
   topContributors: Contributor[];
   topIndustries: Industry[];
   stockValueUSD: number;
-  tradesCount?: number;
+  tradesCount: number;
+  tickerHoldingCount: number;
+  currentNetWorth: number;
+  amountRaised: number;
+  committees: string[];
+  corporatePACMoney: number;
+  maxDonors: string[];
+  uniqueDonors: string[];
+  lat: number;
+  lon: number;
   photoUrl?: string;
-  committees?: string[];
+  websiteUrl?: string;
 };
 
 export type Puzzle = {
@@ -44,33 +50,36 @@ export type Puzzle = {
   topContributors: Contributor[];
   topIndustries: Industry[];
   stockValueUSD: number;
-  tradesCount?: number;
-  committees?: string[];
+  tradesCount: number;
+  tickerHoldingCount: number;
+  currentNetWorth: number;
+  amountRaised: number;
+  committees: string[];
+  corporatePACMoney: number;
+  maxDonors: string[];
+  uniqueDonors: string[];
   answer: {
     fullName: string;
     state: string;
     party: 'D' | 'R' | 'I';
+    lat: number;
+    lon: number;
     photoUrl?: string;
-    firstElection: number;
-    nextElection: number | string;
+    websiteUrl?: string;
   };
 };
 
-// Helper functions to map JSON fields to RosterMember fields
-function mapParty(party: string): 'D' | 'R' | 'I' {
-  if (party === 'Democrat') return 'D';
-  if (party === 'Republican') return 'R';
-  return 'I';
+// Helper functions
+function parseAmount(amountStr: string | number): number {
+  if (typeof amountStr === 'number') return amountStr;
+  if (typeof amountStr !== 'string') return 0;
+  return parseFloat(amountStr.replace(/[$,]/g, '')) || 0;
 }
-function mapChamber(chamber: string): 'House' | 'Senate' {
-  if (chamber === 'House' || chamber === 'Senate') return chamber;
-  // fallback: if party field is 'House' or 'Senate' in the JSON
-  if (chamber === 'Democrat' || chamber === 'Republican') return 'House';
-  return 'House';
-}
-function mapState(state: string): string {
-  // If state is full name, convert to abbreviation if needed (implement as needed)
-  return state;
+
+function parsePercentage(percentStr: string | number): number {
+  if (typeof percentStr === 'number') return percentStr;
+  if (typeof percentStr !== 'string') return 0;
+  return parseFloat(percentStr.replace('%', '')) || 0;
 }
 
 function computeShares<T extends { amount: number }>(arr: T[]): (T & { share: number })[] {
@@ -78,69 +87,132 @@ function computeShares<T extends { amount: number }>(arr: T[]): (T & { share: nu
   return arr.map(x => ({ ...x, share: total ? x.amount / total : 0 }));
 }
 
-// Build a map from name (lowercase) to trades_volume
-const tradesMap = new Map<string, { volume: number, count: number }>();
-(tradesDataRaw as any[]).forEach((entry: any) => {
-  if (entry.name && typeof entry.trades_volume === 'number') {
-    tradesMap.set(entry.name.toLowerCase(), {
-      volume: entry.trades_volume,
-      count: entry.trades_count ?? 0,
-    });
-  }
-});
-
 export const roster: RosterMember[] = (congressDataRaw as any[]).map((m: any) => {
-  const trade = tradesMap.get((m.fullName || '').toLowerCase());
-  const stockValueUSD = trade?.volume ?? 0;
-  const tradesCount = trade?.count ?? 0;
+  // Extract state from "State and District" field (e.g., "CA-12" -> "CA")
+  const stateDistrict = m['State and District'] || '';
+  const state = stateDistrict.split('-')[0] || '';
+  
+  // Parse party
+  const party = m.Party === 'D' ? 'D' : 
+               m.Party === 'R' ? 'R' : 'I';
+  
+  // Parse chamber
+  const chamber = m.Chamber === 'House' || m.Chamber === 'Senate' ? m.Chamber : 'House';
+  
+  // Parse amount raised
+  const amountRaised = parseAmount(m['Amount Raised'] || '$0');
+  
+  // Parse finance mix percentages
+  const largePct = parsePercentage(m['% Large Donors'] || '0%');
+  const smallPct = parsePercentage(m['% (<$200)'] || '0%');
+  const pacPct = parsePercentage(m['% PACs'] || '0%');
+  const otherPct = parsePercentage(m['% Other'] || '0%');
+  const selfPct = parsePercentage(m['% Self-financed'] || '0%');
+  
+  // Calculate amounts from percentages
+  const largeAmount = (largePct / 100) * amountRaised;
+  const smallAmount = (smallPct / 100) * amountRaised;
+  const pacAmount = (pacPct / 100) * amountRaised;
+  const otherAmount = (otherPct / 100) * amountRaised;
+  const selfAmount = (selfPct / 100) * amountRaised;
+  
+  // Parse top contributors
+  const topContributors: Contributor[] = Array.isArray(m.topContributors) 
+    ? m.topContributors.map((c: any) => ({
+        name: String(c.name || ''),
+        amount: parseAmount(c.amount || 0),
+        share: 0 // Will be calculated below
+      }))
+    : [];
+  
+  // Parse top industries
+  const topIndustries: Industry[] = Array.isArray(m.topIndustries) 
+    ? m.topIndustries.map((i: any) => ({
+        name: String(i.name || ''),
+        amount: parseAmount(i.amount || 0),
+        share: 0 // Will be calculated below
+      }))
+    : [];
+  
+  // Calculate shares for contributors and industries
+  const contributorsWithShares = computeShares(topContributors);
+  const industriesWithShares = computeShares(topIndustries);
+  
+  // Parse trade data
+  const tradesCount = parseInt(String(m['Trade Count'] || '0'), 10) || 0;
+  const stockValueUSD = parseAmount(m['Est Trade Volume'] || 0);
+  
+  // Parse ticker holding count - handle both numeric and "No Holdings Data" cases
+  const tickerHoldingCountRaw = m['Ticker Holding Count'];
+  const tickerHoldingCount = (typeof tickerHoldingCountRaw === 'number') ? tickerHoldingCountRaw : 0;
+  
+  // Parse current net worth
+  const currentNetWorth = parseAmount(m['Current_Net_Worth'] || 0);
+  
+  // Parse committees - split by semicolon and filter out empty/none entries
+  const committeesRaw = String(m.Committees || '');
+  const committees = committeesRaw
+    .split(';')
+    .map(c => c.trim())
+    .filter(c => {
+      if (!c) return false;
+      const lowerC = c.toLowerCase();
+      // Filter out variations of "none"
+      return lowerC !== 'n' && 
+             lowerC !== 'o' && 
+             lowerC !== 'e' && 
+             lowerC !== 'none' &&
+             lowerC !== 'no' &&
+             !(lowerC.length === 1 && ['n', 'o', 'e'].includes(lowerC));
+    });
+  
+  // Parse Corporate PAC money
+  const corporatePACMoney = parseAmount(m['CorporatePAC Money'] || 0);
+  
+  // Parse Max Donors - split by semicolon and filter out "No donors"
+  const maxDonorsRaw = String(m['2024 Max Donors'] || '');
+  const maxDonors = maxDonorsRaw.toLowerCase().includes('no donors') ? [] : 
+    maxDonorsRaw
+      .split(';')
+      .map(d => d.trim())
+      .filter(d => d && !d.toLowerCase().includes('no donors'));
+  
+  // Parse Unique Donors - split by semicolon and filter out "No donors"
+  const uniqueDonorsRaw = String(m['2024 Unique Donors'] || '');
+  const uniqueDonors = uniqueDonorsRaw.toLowerCase().includes('no donors') ? [] :
+    uniqueDonorsRaw
+      .split(';')
+      .map(d => d.trim())
+      .filter(d => d && !d.toLowerCase().includes('no donors'));
+  
   return {
-    memberId: m.memberId,
-    fullName: m.fullName,
-    state: mapState(m.state),
-    party: mapParty(m.chamber),
-    chamber: mapChamber(m.party),
-    firstElection: m.firstElection,
-    nextElection: m.nextElection,
-    financeMix: (typeof m.financeMix === 'object' && m.financeMix !== null) ? {
-      large: {
-        pct: m.financeMix.largeIndividualContributions?.pct ?? 0,
-        amount: m.financeMix.largeIndividualContributions?.amount ?? 0,
-      },
-      small: {
-        pct: m.financeMix["smallIndividualContributions(<$200)"]?.pct ?? 0,
-        amount: m.financeMix["smallIndividualContributions(<$200)"]?.amount ?? 0,
-      },
-      pac: {
-        pct: m.financeMix.pACContributions?.pct ?? 0,
-        amount: m.financeMix.pACContributions?.amount ?? 0,
-      },
-      other: {
-        pct: m.financeMix.other?.pct ?? 0,
-        amount: m.financeMix.other?.amount ?? 0,
-      },
-      self: {
-        pct: m.financeMix["candidateSelf-financing"]?.pct ?? 0,
-        amount: m.financeMix["candidateSelf-financing"]?.amount ?? 0,
-      },
-    } : {
-      large: { pct: 0, amount: 0 },
-      small: { pct: 0, amount: 0 },
-      pac: { pct: 0, amount: 0 },
-      other: { pct: 0, amount: 0 },
-      self: { pct: 0, amount: 0 },
+    memberId: String(m.Name || ''),
+    fullName: String(m.Name || ''),
+    state,
+    party,
+    chamber,
+    amountRaised,
+    financeMix: {
+      large: { pct: largePct, amount: largeAmount },
+      small: { pct: smallPct, amount: smallAmount },
+      pac: { pct: pacPct, amount: pacAmount },
+      other: { pct: otherPct, amount: otherAmount },
+      self: { pct: selfPct, amount: selfAmount }
     },
-    topContributors: computeShares(Array.isArray(m.topContributors) ? m.topContributors.map((c: any) => ({
-      name: c.name,
-      amount: c.amount,
-    })) : []),
-    topIndustries: computeShares(Array.isArray(m.topIndustries) ? m.topIndustries.map((i: any) => ({
-      name: i.name,
-      amount: i.amount,
-    })) : []),
+    topContributors: contributorsWithShares,
+    topIndustries: industriesWithShares,
     stockValueUSD,
     tradesCount,
-    photoUrl: undefined, // If available in JSON, map it here
-    committees: Array.isArray(m.committees) ? m.committees : [],
+    tickerHoldingCount,
+    currentNetWorth,
+    committees,
+    corporatePACMoney,
+    maxDonors,
+    uniqueDonors,
+    lat: parseFloat(String(m.INTPTLAT || '0')) || 0,
+    lon: parseFloat(String(m.INTPTLON || '0')) || 0,
+    photoUrl: String(m.PHOTOURL || ''),
+    websiteUrl: String(m.WEBSITEURL || '')
   };
 });
 
@@ -158,14 +230,21 @@ export function getPuzzleForMember(member: RosterMember): Puzzle {
     topIndustries: member.topIndustries.map(i => ({ name: i.name, share: i.share, amount: i.amount })),
     stockValueUSD: member.stockValueUSD,
     tradesCount: member.tradesCount,
+    tickerHoldingCount: member.tickerHoldingCount,
+    currentNetWorth: member.currentNetWorth,
+    amountRaised: member.amountRaised,
     committees: member.committees,
+    corporatePACMoney: member.corporatePACMoney,
+    maxDonors: member.maxDonors,
+    uniqueDonors: member.uniqueDonors,
     answer: {
       fullName: member.fullName,
       state: member.state,
       party: member.party,
+      lat: member.lat,
+      lon: member.lon,
       photoUrl: member.photoUrl,
-      firstElection: member.firstElection,
-      nextElection: member.nextElection,
-    },
+      websiteUrl: member.websiteUrl
+    }
   };
 } 
