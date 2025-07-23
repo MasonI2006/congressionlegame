@@ -46,18 +46,20 @@ export default function Game() {
     const updateCountdown = () => {
       const timestamp = localStorage.getItem('congressionle-puzzle-timestamp');
       if (timestamp) {
-        const SIXTY_SECONDS = 60 * 1000; // 60 seconds in milliseconds
+        const TWELVE_HOURS = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
         const puzzleTime = parseInt(timestamp, 10);
-        const currentPeriod = Math.floor(puzzleTime / SIXTY_SECONDS);
-        const nextPeriodTime = (currentPeriod + 1) * SIXTY_SECONDS;
+        const currentPeriod = Math.floor(puzzleTime / TWELVE_HOURS);
+        const nextPeriodTime = (currentPeriod + 1) * TWELVE_HOURS;
         const now = Date.now();
         const timeLeft = nextPeriodTime - now;
         
         if (timeLeft > 0) {
-          const seconds = Math.floor(timeLeft / 1000);
-          setTimeUntilNext(`${seconds.toString().padStart(2, '0')}s`);
+          const hours = Math.floor(timeLeft / (60 * 60 * 1000));
+          const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
+          const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
+          setTimeUntilNext(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
         } else {
-          setTimeUntilNext('00s');
+          setTimeUntilNext('00:00:00');
           // Trigger new puzzle fetch when time runs out
           if (state.puzzle) {
             fetchNewPuzzle();
@@ -71,11 +73,11 @@ export default function Game() {
     return () => clearInterval(interval);
   }, [state.puzzle]);
 
-  // Function to get current puzzle based on 60-second periods
+  // Function to get current puzzle based on 12-hour periods
   const getCurrentPuzzle = () => {
     const now = Date.now();
-    const SIXTY_SECONDS = 60 * 1000;
-    const periodNumber = Math.floor(now / SIXTY_SECONDS);
+    const TWELVE_HOURS = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+    const periodNumber = Math.floor(now / TWELVE_HOURS);
     
     // Deterministic selection based on period
     const seed = periodNumber * 9301 + 49297; // Simple LCG
@@ -93,7 +95,7 @@ export default function Game() {
     dispatch({ type: 'RESET' });
     dispatch({ type: 'INIT', payload: puzzle });
     localStorage.setItem('congressionle-puzzle-timestamp', Date.now().toString());
-    console.log('Fetched new puzzle for new 60-second period:', member.fullName);
+    console.log('Fetched new puzzle for new 12-hour period:', member.fullName);
   };
 
   useEffect(() => {
