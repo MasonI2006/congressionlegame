@@ -47,6 +47,14 @@ function getStateFeedback(guessedMemberName: string | undefined, actualMemberNam
   
   if (!guessedMember || !actualMember) return { arrow: '❓', distance: '--' };
   
+  // Check if lat/lon coordinates are valid
+  if (!guessedMember.lat || !guessedMember.lon || !actualMember.lat || !actualMember.lon ||
+      isNaN(guessedMember.lat) || isNaN(guessedMember.lon) || isNaN(actualMember.lat) || isNaN(actualMember.lon) ||
+      (guessedMember.lat === 0 && guessedMember.lon === 0) || 
+      (actualMember.lat === 0 && actualMember.lon === 0)) {
+    return { arrow: '❓', distance: '--' };
+  }
+  
   // Special case: If the answer is a Senator, anyone from the same state gets 0 miles
   if (actualMember.chamber === 'Senate' && guessedMember.state === actualMember.state) {
     return { arrow: '✅', distance: '0 mi' };
@@ -63,6 +71,11 @@ function getStateFeedback(guessedMemberName: string | undefined, actualMemberNam
     actualMember.lat, 
     actualMember.lon
   );
+  
+  // Validate the calculated distance
+  if (isNaN(distance) || distance < 0) {
+    return { arrow: '❓', distance: '--' };
+  }
   
   // Calculate direction arrow based on lat/lng differences
   const dLat = actualMember.lat - guessedMember.lat;
