@@ -42,32 +42,14 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 function getStateFeedback(guessedMemberName: string | undefined, actualMemberName: string | undefined) {
-  console.log('getStateFeedback called with:', { guessedMemberName, actualMemberName });
-  console.log('Types:', { 
-    guessedType: typeof guessedMemberName, 
-    actualType: typeof actualMemberName,
-    guessedLength: guessedMemberName?.length,
-    actualLength: actualMemberName?.length
-  });
-  
-  if (!guessedMemberName || !actualMemberName) {
-    console.log('Early return due to missing names');
-    return { arrow: '❓', distance: '--' };
-  }
+  if (!guessedMemberName || !actualMemberName) return { arrow: '❓', distance: '--' };
   
   const guessedMember = roster.find(m => m.fullName === guessedMemberName);
   const actualMember = roster.find(m => m.fullName === actualMemberName);
   
   if (!guessedMember || !actualMember) {
-    console.log('Member not found:', { guessedMemberName, actualMemberName, rosterSize: roster.length });
     return { arrow: '❓', distance: '--' };
   }
-  
-  // Log coordinates for debugging
-  console.log('Coordinates check:', {
-    guessed: { name: guessedMember.fullName, lat: guessedMember.lat, lon: guessedMember.lon },
-    actual: { name: actualMember.fullName, lat: actualMember.lat, lon: actualMember.lon }
-  });
   
   // Special case: If the answer is a Senator, anyone from the same state gets 0 miles
   if (actualMember.chamber === 'Senate' && guessedMember.state === actualMember.state) {
@@ -113,9 +95,6 @@ function getStateFeedback(guessedMemberName: string | undefined, actualMemberNam
 
 export default function GuessHistory({ guesses }: { guesses: Guess[] }) {
   const { state } = useContext(GameContext);
-  // Debug: Log the guesses array
-  console.log('GuessHistory rendered with guesses:', guesses);
-  console.log('Current puzzle:', state.puzzle);
   
   if (guesses.length === 0) {
     return (
@@ -149,12 +128,9 @@ export default function GuessHistory({ guesses }: { guesses: Guess[] }) {
           </thead>
           <tbody>
             {guesses.map((guess, index) => {
-              console.log(`Processing guess ${index}:`, guess);
               // Use the actual member name from the current puzzle instead of the guess object
               const actualMemberName = state.puzzle?.answer.fullName;
-              console.log(`Using actualMemberName from puzzle: ${actualMemberName}`);
               const feedback = getStateFeedback(guess.guess, actualMemberName);
-              console.log(`Feedback for guess ${index}:`, feedback);
               return (
                 <tr key={index} className="align-middle">
                   <td className="px-2 text-center font-bold">{index + 1}</td>

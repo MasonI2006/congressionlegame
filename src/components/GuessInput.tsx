@@ -13,10 +13,35 @@ export default function GuessInput({ disabled }: { disabled: boolean }) {
     setInput(value);
     
     if (value.length > 0) {
-      const filtered = roster.filter(member => 
-        member.fullName.toLowerCase().includes(value.toLowerCase())
-      );
-      setSuggestions(filtered.slice(0, 5));
+      const searchTerm = value.toLowerCase();
+      const filtered = roster.filter(member => {
+        const fullName = member.fullName.toLowerCase();
+        const state = member.state.toLowerCase();
+        const party = (member.party === 'D' ? 'democrat' : member.party === 'R' ? 'republican' : 'independent').toLowerCase();
+        
+        return fullName.includes(searchTerm) || 
+               state.includes(searchTerm) || 
+               party.includes(searchTerm);
+      });
+      
+      // Sort results: exact name matches first, then partial name matches, then state/party matches
+      const sortedFiltered = filtered.sort((a, b) => {
+        const aName = a.fullName.toLowerCase();
+        const bName = b.fullName.toLowerCase();
+        
+        // Exact start of name match gets highest priority
+        const aStartsWithName = aName.startsWith(searchTerm);
+        const bStartsWithName = bName.startsWith(searchTerm);
+        
+        if (aStartsWithName && !bStartsWithName) return -1;
+        if (!aStartsWithName && bStartsWithName) return 1;
+        
+        // Then alphabetical order
+        return aName.localeCompare(bName);
+      });
+      
+      // Show up to 20 suggestions instead of just 5
+      setSuggestions(sortedFiltered.slice(0, 20));
     } else {
       setSuggestions([]);
     }
@@ -33,9 +58,22 @@ export default function GuessInput({ disabled }: { disabled: boolean }) {
     const sameParty = member.party === puzzle.answer.party;
     const sameChamber = member.chamber === answerChamber;
 
+    const guessPayload = { 
+      guess: member.fullName, 
+      correct, 
+      sameState, 
+      sameParty, 
+      chamber: member.chamber as 'House' | 'Senate', 
+      sameChamber, 
+      party: member.party, 
+      state: member.state, 
+      actualState: puzzle.answer.state,
+      actualMemberName: puzzle.answer.fullName
+    };
+
     dispatch({
       type: 'GUESS',
-      payload: { guess: member.fullName, correct, sameState, sameParty, chamber: member.chamber as 'House' | 'Senate', sameChamber, party: member.party, state: member.state, actualState: puzzle.answer.state }
+      payload: guessPayload
     });
 
     setInput('');
@@ -57,7 +95,7 @@ export default function GuessInput({ disabled }: { disabled: boolean }) {
           value={input}
           onChange={handleInputChange}
           className=""
-          placeholder="Type a member of congress' name..."
+          placeholder="Type a name, state, or party..."
           disabled={disabled}
           autoComplete="off"
           spellCheck="false"

@@ -56,6 +56,8 @@ button, .guess-suggestion {
   z-index: 10;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   margin-top: 2px;
+  max-height: 300px; /* Limit height to show about 8-9 suggestions */
+  overflow-y: auto; /* Enable vertical scrolling */
 }
 .suggestion-list button {
   width: 100%;
@@ -71,6 +73,26 @@ button, .guess-suggestion {
 }
 .suggestion-list button:hover {
   background: #27272a;
+  transform: none; /* Override the general button scale effect */
+}
+
+/* Custom scrollbar styling for suggestion list */
+.suggestion-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.suggestion-list::-webkit-scrollbar-track {
+  background: #232326;
+  border-radius: 4px;
+}
+
+.suggestion-list::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 4px;
+}
+
+.suggestion-list::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
 }
 
 .pie-chart-label {
@@ -214,10 +236,10 @@ button, .guess-suggestion {
 }
 
 /* Button hover effect */
-button, .guess-suggestion {
+button:not(.suggestion-list button), .guess-suggestion:not(.suggestion-list button) {
   transition: transform 0.15s cubic-bezier(.4,2,.6,1), background 0.2s;
 }
-button:hover, .guess-suggestion:hover {
+button:not(.suggestion-list button):hover, .guess-suggestion:not(.suggestion-list button):hover {
   transform: scale(1.07);
   background: #bef264 !important;
   color: #18181b !important;
