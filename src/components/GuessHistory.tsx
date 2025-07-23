@@ -45,15 +45,16 @@ function getStateFeedback(guessedMemberName: string | undefined, actualMemberNam
   const guessedMember = roster.find(m => m.fullName === guessedMemberName);
   const actualMember = roster.find(m => m.fullName === actualMemberName);
   
-  if (!guessedMember || !actualMember) return { arrow: '❓', distance: '--' };
-  
-  // Check if lat/lon coordinates are valid
-  if (!guessedMember.lat || !guessedMember.lon || !actualMember.lat || !actualMember.lon ||
-      isNaN(guessedMember.lat) || isNaN(guessedMember.lon) || isNaN(actualMember.lat) || isNaN(actualMember.lon) ||
-      (guessedMember.lat === 0 && guessedMember.lon === 0) || 
-      (actualMember.lat === 0 && actualMember.lon === 0)) {
+  if (!guessedMember || !actualMember) {
+    console.log('Member not found:', { guessedMemberName, actualMemberName, rosterSize: roster.length });
     return { arrow: '❓', distance: '--' };
   }
+  
+  // Log coordinates for debugging
+  console.log('Coordinates check:', {
+    guessed: { name: guessedMember.fullName, lat: guessedMember.lat, lon: guessedMember.lon },
+    actual: { name: actualMember.fullName, lat: actualMember.lat, lon: actualMember.lon }
+  });
   
   // Special case: If the answer is a Senator, anyone from the same state gets 0 miles
   if (actualMember.chamber === 'Senate' && guessedMember.state === actualMember.state) {
