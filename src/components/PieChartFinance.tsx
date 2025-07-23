@@ -3,7 +3,20 @@ import React from 'react';
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#6366F1'];
 
-export default function PieChartFinance({ data }: { data: { large: { pct: number; amount: number }; small: { pct: number; amount: number }; pac: { pct: number; amount: number }; other: { pct: number; amount: number }; self: { pct: number; amount: number } } }) {
+interface FinanceMixData {
+  large: { pct: number; amount: number };
+  small: { pct: number; amount: number };
+  pac: { pct: number; amount: number };
+  other: { pct: number; amount: number };
+  self: { pct: number; amount: number };
+}
+
+interface PieChartFinanceProps {
+  data: FinanceMixData;
+  totalRaised?: number;
+}
+
+export default function PieChartFinance({ data, totalRaised }: PieChartFinanceProps) {
   // Handle no data
   if (!data || Object.values(data).every((v: any) => v.pct === 0 && v.amount === 0)) {
     return (
@@ -13,13 +26,14 @@ export default function PieChartFinance({ data }: { data: { large: { pct: number
     );
   }
 
-  // Calculate total campaign funds (using stock value as proxy for total funds)
-  const totalFunds =
+  // Calculate total campaign funds (use passed totalRaised if available, otherwise sum amounts)
+  const totalFunds = totalRaised || (
     data.large.amount +
     data.small.amount +
     data.pac.amount +
     data.other.amount +
-    data.self.amount;
+    data.self.amount
+  );
   
   const chartData = [
     {
