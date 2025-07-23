@@ -99,6 +99,9 @@ function getStateFeedback(guessedMemberName: string | undefined, actualMemberNam
 }
 
 export default function GuessHistory({ guesses }: { guesses: Guess[] }) {
+  // Debug: Log the guesses array
+  console.log('GuessHistory rendered with guesses:', guesses);
+  
   if (guesses.length === 0) {
     return (
       <div className="guess-history centered" style={{ fontSize: '2em', padding: '4em' }}>
@@ -131,7 +134,9 @@ export default function GuessHistory({ guesses }: { guesses: Guess[] }) {
           </thead>
           <tbody>
             {guesses.map((guess, index) => {
+              console.log(`Processing guess ${index}:`, guess);
               const feedback = getStateFeedback(guess.guess, (guess as any).actualMemberName);
+              console.log(`Feedback for guess ${index}:`, feedback);
               return (
                 <tr key={index} className="align-middle">
                   <td className="px-2 text-center font-bold">{index + 1}</td>
