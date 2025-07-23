@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import stateCoords from '../lib/state_center_coords.json';
+import { roster } from '../lib/data';
 
 export type Guess = {
   guess: string;
@@ -11,29 +11,77 @@ export type Guess = {
   sameChamber: boolean;
   party?: string;
   state?: string;
+  actualState?: string;
+  actualMemberName?: string;
 };
 
-function getStateFeedback(guessedState: string | undefined, actualState: string | undefined) {
-  if (!guessedState || !actualState) return { arrow: '❓', percent: '--' };
-  const g = stateCoords[guessedState];
-  const a = stateCoords[actualState];
-  if (!g || !a) return { arrow: '❓', percent: '--' };
-  const dx = a.x - g.x;
-  const dy = a.y - g.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  const percent = Math.max(0, 100 - Math.round((dist / 1.414) * 100));
-  const threshold = 0.02;
+// Haversine formula to calculate distance between two lat/lng points in miles
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3959; // Earth's radius in miles
+  
+  // Convert degrees to radians
+  const lat1Rad = lat1 * (Math.PI / 180);
+  const lon1Rad = lon1 * (Math.PI / 180);
+  const lat2Rad = lat2 * (Math.PI / 180);
+  const lon2Rad = lon2 * (Math.PI / 180);
+  
+  // Haversine formula
+  const dLat = lat2Rad - lat1Rad;
+  const dLon = lon2Rad - lon1Rad;
+  
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1Rad) * Math.cos(lat2Rad) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
+  
+  return Math.round(distance);
+}
+
+function getStateFeedback(guessedMemberName: string | undefined, actualMemberName: string | undefined) {
+  if (!guessedMemberName || !actualMemberName) return { arrow: '❓', distance: '--' };
+  
+  const guessedMember = roster.find(m => m.fullName === guessedMemberName);
+  const actualMember = roster.find(m => m.fullName === actualMemberName);
+  
+  if (!guessedMember || !actualMember) return { arrow: '❓', distance: '--' };
+  
+  // Special case: If the answer is a Senator, anyone from the same state gets 0 miles
+  if (actualMember.chamber === 'Senate' && guessedMember.state === actualMember.state) {
+    return { arrow: '✅', distance: '0 mi' };
+  }
+  
+  // Special case: If the guess is a Senator and answer is from same state, also 0 miles
+  if (guessedMember.chamber === 'Senate' && guessedMember.state === actualMember.state) {
+    return { arrow: '✅', distance: '0 mi' };
+  }
+  
+  const distance = calculateDistance(
+    guessedMember.lat, 
+    guessedMember.lon, 
+    actualMember.lat, 
+    actualMember.lon
+  );
+  
+  // Calculate direction arrow based on lat/lng differences
+  const dLat = actualMember.lat - guessedMember.lat;
+  const dLon = actualMember.lon - guessedMember.lon;
+  const threshold = 0.5; // degrees
+  
   let arrow = '⬆️';
-  if (percent === 100) arrow = '✅';
-  else if (Math.abs(dx) < threshold && dy > threshold) arrow = '⬆️';
-  else if (Math.abs(dx) < threshold && dy < -threshold) arrow = '⬇️';
-  else if (dx > threshold && Math.abs(dy) < threshold) arrow = '➡️';
-  else if (dx < -threshold && Math.abs(dy) < threshold) arrow = '⬅️';
-  else if (dx > threshold && dy > threshold) arrow = '↗️';
-  else if (dx > threshold && dy < -threshold) arrow = '↘️';
-  else if (dx < -threshold && dy > threshold) arrow = '↖️';
-  else if (dx < -threshold && dy < -threshold) arrow = '↙️';
-  return { arrow, percent: `${percent}%` };
+  if (distance === 0) arrow = '✅';
+  else if (Math.abs(dLon) < threshold && dLat > threshold) arrow = '⬆️';
+  else if (Math.abs(dLon) < threshold && dLat < -threshold) arrow = '⬇️';
+  else if (dLon > threshold && Math.abs(dLat) < threshold) arrow = '➡️';
+  else if (dLon < -threshold && Math.abs(dLat) < threshold) arrow = '⬅️';
+  else if (dLon > threshold && dLat > threshold) arrow = '↗️';
+  else if (dLon > threshold && dLat < -threshold) arrow = '↘️';
+  else if (dLon < -threshold && dLat > threshold) arrow = '↖️';
+  else if (dLon < -threshold && dLat < -threshold) arrow = '↙️';
+  
+  // Return distance in miles format
+  return { arrow, distance: `${distance} mi` };
 }
 
 export default function GuessHistory({ guesses }: { guesses: Guess[] }) {
@@ -64,12 +112,12 @@ export default function GuessHistory({ guesses }: { guesses: Guess[] }) {
               <th className="px-2 text-center">State</th>
               <th className="px-2 text-center">Party</th>
               <th className="px-2 text-center">Chamber</th>
-              <th className="px-2 text-center">State Proximity</th>
+              <th className="px-2 text-center">Distance</th>
             </tr>
           </thead>
           <tbody>
             {guesses.map((guess, index) => {
-              const feedback = getStateFeedback(guess.state, (guess as any).actualState);
+              const feedback = getStateFeedback(guess.guess, (guess as any).actualMemberName);
               return (
                 <tr key={index} className="align-middle">
                   <td className="px-2 text-center font-bold">{index + 1}</td>
@@ -84,7 +132,7 @@ export default function GuessHistory({ guesses }: { guesses: Guess[] }) {
                     <span className={`feedback-bar ${guess.sameChamber ? 'feedback-correct' : 'feedback-wrong'} inline-block min-w-10 min-h-10 text-lg leading-10 rounded-lg`}>{guess.sameChamber ? '✓' : '✗'}</span>
                   </td>
                   <td className="px-2 text-center text-lg">
-                    <span className="feedback-arrow">{feedback.arrow} {feedback.percent}</span>
+                    <span className="feedback-arrow">{feedback.arrow} {feedback.distance}</span>
                   </td>
                 </tr>
               );
